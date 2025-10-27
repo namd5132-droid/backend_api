@@ -1,41 +1,9 @@
-# # ----- Stage 1: Build -----
-# FROM composer:2 AS build
-# WORKDIR /app
-
-# # Copy toàn bộ mã nguồn vào container
-# COPY . .
-
-# # Cài đặt dependencies của Laravel
-# RUN composer install --no-dev --optimize-autoloader
-
-# # ----- Stage 2: Run -----
-# FROM php:8.2-cli
-
-# # Cài đặt extension cần thiết cho Laravel (cho MySQL)
-# RUN docker-php-ext-install pdo pdo_mysql
-
-# # Sao chép ứng dụng đã build
-# WORKDIR /app
-# COPY --from=build /app /app
-
-# # Tạo APP_KEY
-# RUN php artisan key:generate --force || true
-
-# # Render tự cấp PORT qua biến môi trường
-# ENV PORT=10000
-
-# # Chạy server Laravel
-# CMD php artisan serve --host=0.0.0.0 --port=$PORT
 # -------------------------------
 # Stage 1: Build dependencies
 # -------------------------------
 FROM composer:2 AS build
 WORKDIR /app
-
-# Copy toàn bộ code vào container
 COPY . .
-
-# Cài đặt dependency cho Laravel
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
 # -------------------------------
@@ -43,27 +11,26 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progre
 # -------------------------------
 FROM php:8.2-cli
 
-# Cài đặt extension cần thiết cho Laravel
-RUN docker-php-ext-install pdo pdo_mysql
+# 🧩 Cài extension cần thiết cho Laravel
+RUN apt-get update && apt-get install -y zip unzip git libpng-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring bcmath gd
 
-# Copy code từ stage build
 WORKDIR /app
 COPY --from=build /app /app
 
-# Thiết lập quyền cho storage và bootstrap
+# 🧩 Copy file .env.example thành .env
+RUN cp .env.example .env || true
+
+# 🧩 Phân quyền cho storage và cache
 RUN chmod -R 775 storage bootstrap/cache || true
 
-# Sinh APP_KEY nếu chưa có (Render chạy lần đầu)
+# 🧩 Tạo APP_KEY, clear & cache config
 RUN php artisan key:generate --force || true
+RUN php artisan config:clear && php artisan route:clear && php artisan cache:clear
 
-# Clear và cache lại cấu hình Laravel
-RUN php artisan config:clear && php artisan config:cache && php artisan route:cache
-
-# Render sẽ truyền PORT động qua biến môi trường
+# 🧩 Render tự cấp PORT qua biến môi trường
 ENV PORT=10000
-
-# Expose port cho Laravel
 EXPOSE 10000
 
-# Start Laravel server
+# 🧩 Start Laravel server
 CMD php artisan serve --host=0.0.0.0 --port=$PORT

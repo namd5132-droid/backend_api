@@ -23,6 +23,6 @@ services:
       - key: DB_USERNAME
         value: your-db-user
       - key: DB_PASSWORD
-        value: your-db-password
+        value: your-db-pass
       - key: CORS_ALLOWED_ORIGINS
-        value: https://wedxemphim4k.vercel.app/
+        value: https://your-frontend.vercel.app

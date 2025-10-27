@@ -3,7 +3,7 @@
 return [
 
     'paths' => ['api/*'],
-'allowed_origins' => ['https://wedxemphim4k.vercel.app/'], // hoặc ['https://your-frontend.vercel.app']
+'allowed_origins' => ['*'], // hoặc ['https://your-frontend.vercel.app']
 'allowed_methods' => ['*'],
 'allowed_headers' => ['*'],
 
